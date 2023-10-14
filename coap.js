@@ -1,4 +1,10 @@
 const coap = require("coap");
+const axios = require("axios");
+
+const influxDBURL =
+  "http://localhost:8086/api/v2/write?org=ferman&bucket=coapdb&precision=s";
+const influxDBToken =
+  "qlHlljmPUr_db95TBbB-i5iN001F89tzn8kYgLlrnMVRPmAQh6qa0Z7szIyOXhIxYnAGG9opv0-CG5y__IqFcw==";
 
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -6,7 +12,7 @@ function randomInt(min, max) {
 
 const portNumber = 5683;
 coap
-  .createServer(function (req, res) {
+  .createServer(async function (req, res) {
     console.info("CoAP device got a request from %s", req.url);
 
     if (req.method !== "GET") {
@@ -24,13 +30,19 @@ coap
 
     switch (req.url) {
       case "/co2":
-        displayOutput(res, { Co2: randomInt(0, 1000) });
+        const co2Value = randomInt(0, 1000);
+        writeToInflux("co2", co2Value);
+        displayOutput(res, { Co2: co2Value });
         break;
       case "/temperature":
-        displayOutput(res, { Temperature: randomInt(-10, 50) });
+        const temperatureValue = randomInt(-10, 50);
+        writeToInflux("temperature", temperatureValue);
+        displayOutput(res, { Temperature: temperatureValue });
         break;
       case "/humidity":
-        displayOutput(res, { Humidity: randomInt(0, 100) });
+        const humidityValue = randomInt(0, 100);
+        writeToInflux("humidity", humidityValue);
+        displayOutput(res, { Humidity: humidityValue });
         break;
       default:
         displayOutput(res, { error: "Not Found" });
@@ -50,6 +62,25 @@ function displayOutput(res, content) {
   }
 }
 
-// node coap.js
+function writeToInflux(measurement, value) {
+  const dataPoint = `${measurement} value=${value}`;
+  axios
+    .post(influxDBURL, dataPoint, {
+      headers: {
+        Authorization: `Token ${influxDBToken}`,
+      },
+    })
+    .then((response) => {
+      if (response.status === 204) {
+        console.log(`Data written to InfluxDB: ${measurement} - ${value}`);
+      } else {
+        console.error("Error writing to InfluxDB: Unexpected response status");
+      }
+    })
+    .catch((error) => {
+      console.error(`Error writing to InfluxDB: ${error.message}`);
+    });
+}
 
+// node coap.js
 // Test: coap get coap://localhost:5683/co2
