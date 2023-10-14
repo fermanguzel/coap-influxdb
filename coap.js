@@ -81,6 +81,3 @@ function writeToInflux(measurement, value) {
       console.error(`Error writing to InfluxDB: ${error.message}`);
     });
 }
-
-// node coap.js
-// Test: coap get coap://localhost:5683/co2
