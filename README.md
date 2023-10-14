@@ -12,7 +12,7 @@ Before you begin, ensure you have the following prerequisites installed:
 ## Installation
 
 ```bash
-git clone [REPO]<https://github.com/fermanguzel/coap-influxdb>
+git clone https://github.com/fermanguzel/coap-influxdb
 ```
 
 1. Install the required Node.js packages using npm.
